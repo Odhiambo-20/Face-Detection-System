@@ -63,25 +63,6 @@ VIDEO_PATHS = [
     "/home/victor/Documents/Desktop/Embeddings/Android video 5.mp4",             # V5
     "/home/victor/Documents/Desktop/Embeddings/IOS -Sha V6 .MOV",               # V6
     "/home/victor/Documents/Desktop/Embeddings/IOS - Rusl V7.mov",              # V7
-    
-
-
-   # "Video_Dataset/V8 instagram Make up.mp4",
-   # "Video_Dataset/V8 instagram No make up.mp4",
-   # "Video_Dataset/V9 Instagram Make up.mp4",
-    #"Video_Dataset/V9 Instagram No make up.mp4",
-    #"Video_Dataset/V10 Instagram Make up.mp4",
-   # "Video_Dataset/V10 Instagram No make up.mp4",
-    #"Video_Dataset/V11 instagram Make up.mp4",
-    #"Video_Dataset/V11 instagram No make up.mp4",
-    #"Video_Dataset/V12 instagram Make up.mp4",
-   # "Video_Dataset/V12 instagram No make up.mp4",
-    #"Video_Dataset/V13 instagram Make up.mp4",
-   # "Video_Dataset/V13 instagram No make up.mp4",
-
-
-   
-    
 ]
 
 ADAFACE_WEIGHTS = (
@@ -110,31 +91,9 @@ VIDEO_NAMES = {
     "video_5": "V5 Android5",
     "video_6": "V6 Sha",
     "video_7": "V7 Rusl",
-    #"video_8":  "V8-MakeUp",
-   # "video_9":  "V8-NoMakeUp",
-    #"video_10": "V9-MakeUp",
-    #"video_11": "V9-NoMakeUp",
-    #"video_12": "V10-MakeUp",
-   # "video_13": "V10-NoMakeUp",
-    #"video_14": "V11-MakeUp",
-    #"video_15": "V11-NoMakeUp",
-   # "video_16": "V12-MakeUp",
-    #"video_17": "V12-NoMakeUp",
-    #"video_18": "V13-MakeUp",
-    #"video_19": "V13-NoMakeUp",
 }
 
 GENUINE_SET         = {"video_1", "video_2", "video_3", "video_4"}
-"""
-GENUINE_PAIRS = {
-    ("video_8",  "video_9"),   # V8 makeup vs V8 no makeup
-    ("video_10", "video_11"),  # V9 makeup vs V9 no makeup
-    ("video_12", "video_13"),  # V10 makeup vs V10 no makeup
-    ("video_14", "video_15"),  # V11 makeup vs V11 no makeup
-    ("video_16", "video_17"),  # V12 makeup vs V12 no makeup
-    ("video_18", "video_19"),  # V13 makeup vs V13 no makeup
-}
-"""
 FRAMES_TO_USE       = 20          # top-20 sharpest frames used for embedding
 FACE_SIZE           = 112         # AdaFace canonical input size
 
@@ -166,16 +125,16 @@ REFERENCE_PTS = np.array([
 
 #  LANDMARK GATE BOUNDS  (DISABLED — all gate checking commented out)
 
-GATE_BOUNDS: Dict[str, Tuple[float, float, float, float]] = {
-     # landmark        x_min  x_max  y_min  y_max
-     "left_eye":    (0.15,  0.45,  0.15,  0.45),
-     "right_eye":   (0.55,  0.85,  0.15,  0.45),
-     "nose":        (0.35,  0.65,  0.40,  0.65),
-     "left_mouth":  (0.20,  0.50,  0.60,  0.90),
-     "right_mouth": (0.50,  0.80,  0.60,  0.90),
-}
+# GATE_BOUNDS: Dict[str, Tuple[float, float, float, float]] = {
+#     # landmark        x_min  x_max  y_min  y_max
+#     "left_eye":    (0.15,  0.45,  0.15,  0.45),
+#     "right_eye":   (0.55,  0.85,  0.15,  0.45),
+#     "nose":        (0.35,  0.65,  0.40,  0.65),
+#     "left_mouth":  (0.20,  0.50,  0.60,  0.90),
+#     "right_mouth": (0.50,  0.80,  0.60,  0.90),
+# }
 
-#GATE_NAMES = ("left_eye", "right_eye", "nose", "left_mouth", "right_mouth")
+# _GATE_NAMES = ("left_eye", "right_eye", "nose", "left_mouth", "right_mouth")
 
 
 #  RETINAFACE PRIOR BOX  (from layers/functions/prior_box.py)
@@ -363,33 +322,14 @@ class RetinaFaceDetector:
 
 
 #  LANDMARK GATE  (DISABLED — function always returns True)
+
 def check_landmark_gate(
     landmarks: np.ndarray,
     bbox: np.ndarray,
 ) -> bool:
     """
-    Validate each landmark falls within expected proportional bounds
-    relative to the bounding box. Returns False if any point fails.
+    Landmark gate DISABLED — always passes.
     """
-    x1, y1, x2, y2 = bbox
-    bw = x2 - x1
-    bh = y2 - y1
-
-    if bw <= 0 or bh <= 0:
-        return False
-
-    pts = landmarks.reshape(5, 2)
-
-    for (name, (xmin, xmax, ymin, ymax)), (lx, ly) in zip(
-        GATE_BOUNDS.items(), pts
-    ):
-        # Normalise landmark into [0,1] within the bounding box
-        nx = (lx - x1) / bw
-        ny = (ly - y1) / bh
-
-        if not (xmin <= nx <= xmax and ymin <= ny <= ymax):
-            return False
-
     return True
 
 
@@ -544,7 +484,6 @@ def embed_video(
         return None
 
     n_no_face      = 0
-    n_gate_fail    = 0 
     n_umeyama_fail = 0
     aligned_pool: List[Tuple[float, np.ndarray]] = []
 
@@ -575,10 +514,6 @@ def embed_video(
             continue
 
         bbox, landmarks_retina = result
-        # Landmark gate — skip frame if any point is out of bounds
-        if not check_landmark_gate(landmarks_retina, bbox):
-            n_gate_fail += 1
-            continue
 
         aligned = umeyama_align(frame_retina, landmarks_retina)
         if aligned is None:
@@ -592,8 +527,7 @@ def embed_video(
         
     log.info(
         f"  [{name}] RetinaFace: no_face={n_no_face}  "
-        f"gate_fail={n_gate_fail}  umeyama_fail={n_umeyama_fail}  "
-       #f"gate_fail=DISABLED  umeyama_fail={n_umeyama_fail}  "
+        f"gate_fail=DISABLED  umeyama_fail={n_umeyama_fail}  "
         f"aligned={len(aligned_pool)}"
     )
 
@@ -675,9 +609,6 @@ def main():
             embeddings[key] = result
 
     keys = [f"video_{i}" for i in range(1, 8) if f"video_{i}" in embeddings]
-    # Change the both_genuine check in the pair loop:
-    #both_genuine = (ka in GENUINE_SET and kb in GENUINE_SET) or \
-               #(ka, kb) in GENUINE_PAIRS or (kb, ka) in GENUINE_PAIRS
 
     print("\n")
     print("=" * 55)
