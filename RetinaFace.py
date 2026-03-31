@@ -66,11 +66,11 @@ VIDEO_PATHS = [
 ]
 
 ADAFACE_WEIGHTS = (
-    "./weights/AdaFace_IR18.onnx"
+    "./weights/adaface-onnx/AdaFace_IR18.onnx"
 )
 
 RETINAFACE_WEIGHTS = (
-    "./weights/retinaface_mv2.onnx"
+    "./weights/retinaface-pytorch/retinaface_mv2.onnx"
 )
 
 # RetinaFace backbone config — MobileNetV2 (matches retinaface_mv2.onnx)
