@@ -66,11 +66,11 @@ VIDEO_PATHS = [
 ]
 
 ADAFACE_WEIGHTS = (
-    "/home/victor/Documents/Desktop/Adaface/adaface-onnx/weights/adaface_ir_18.onnx"
+    "./weights/AdaFace_IR18.onnx"
 )
 
 RETINAFACE_WEIGHTS = (
-    "/home/victor/Documents/Desktop/Face Detection/retinaface-pytorch/weights/retinaface_mv2.onnx"
+    "./weights/retinaface_mv2.onnx"
 )
 
 # RetinaFace backbone config — MobileNetV2 (matches retinaface_mv2.onnx)
